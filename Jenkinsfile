@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKER_HOST = "tcp://dind:2375"
         DOCKER_REGISTRY = "docker.io"
-        DOCKER_IMAGE = "maisara99/jenkins-py:V1.1"
+        DOCKER_IMAGE = "maisara99/jenkins-py:latest"
     }
 
     stages {
