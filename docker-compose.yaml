@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      DOCKER_HOST: tcp://dind:2375
+      DOCKER_TLS_VERIFY: ""    # ensure no TLS expected
+    depends_on:
+      - dind
+    volumes:
+      - jenkins_home:/var/jenkins_home
+
+  dind:
+    image: docker:24.0-dind
+    container_name: dind
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""   # disable TLS in DinD
+    command: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
+    volumes:
+      - dind_storage:/var/lib/docker
+
+volumes:
+  jenkins_home:
+  dind_storage:
