@@ -4,12 +4,18 @@ pipeline {
     environment {
         DOCKER_HOST = "tcp://dind:2375"
         DOCKER_REGISTRY = "docker.io"
-        DOCKER_IMAGE = "maisara99/cicd-demo" // <-- change this
+        DOCKER_IMAGE = "maisara99/jenkins-py"
     }
 
     stages {
         stage('Checkout') {
             steps { checkout scm }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'docker run --rm $DOCKER_IMAGE:$BUILD_NUMBER python -m pytest tests/ -v'
+            }
         }
 
         stage('Build Docker Image') {

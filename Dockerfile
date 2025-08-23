@@ -1,22 +1,5 @@
 FROM python:3.11-slim
 
-ARG BUILD_DATE="unknown"
-ARG VCS_REF="unknown" 
-ARG VERSION="unknown"
-
-ENV BUILD_DATE=$BUILD_DATE \
-    VCS_REF=$VCS_REF \
-    VERSION=$VERSION \
-    PYTHONUNBUFFERED=1 \
-    PORT=5000
-
-LABEL org.opencontainers.image.created=$BUILD_DATE \
-      org.opencontainers.image.source="https://github.com/maisarasherif/RKE2-Deployment.git" \
-      org.opencontainers.image.version=$VERSION \
-      org.opencontainers.image.revision=$VCS_REF \
-      org.opencontainers.image.title="Flask CI/CD Demo" \
-      org.opencontainers.image.description="Flask app with CI/CD pipeline"
-
 WORKDIR /app
 
 #non-root user for security
@@ -26,11 +9,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY app/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
+COPY app/ .
 
 RUN chown -R appuser:appuser /app
 
