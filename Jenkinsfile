@@ -4,7 +4,8 @@ pipeline {
     environment {
         DOCKER_HOST = "tcp://dind:2375"
         DOCKER_REGISTRY = "docker.io"
-        DOCKER_IMAGE = "maisara99/jenkins-py:latest"
+        DOCKER_IMAGE = "maisara99/jenkins-py"
+        BUILD_NUMBER = "latest"
     }
 
     stages {
@@ -14,13 +15,13 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh 'docker run --rm $DOCKER_IMAGE python -m pytest tests/ -v'
+                sh 'docker run --rm $DOCKER_IMAGE:$BUILD_NUMBER python -m pytest tests/ -v'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .'
             }
         }
 
@@ -34,8 +35,8 @@ pipeline {
 
         stage('Push Image') {
             steps {
-                sh 'docker push $DOCKER_IMAGE'
-                sh 'docker tag $DOCKER_IMAGE:latest'
+                sh 'docker push $DOCKER_IMAGE:$BUILD_NUMBER'
+                sh 'docker tag $DOCKER_IMAGE:$BUILD_NUMBER $DOCKER_IMAGE:latest'
                 sh 'docker push $DOCKER_IMAGE:latest'
             }
         }
