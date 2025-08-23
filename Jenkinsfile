@@ -35,7 +35,7 @@ pipeline {
         stage('Push Image') {
             steps {
                 sh 'docker push $DOCKER_IMAGE'
-                sh 'docker tag $DOCKER_IMAGE $DOCKER_IMAGE:latest'
+                sh 'docker tag $DOCKER_IMAGE:latest'
                 sh 'docker push $DOCKER_IMAGE:latest'
             }
         }
