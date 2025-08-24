@@ -56,7 +56,7 @@ pipeline {
                             kubectl config use-context jenkins
                             
                             # Apply deployment manifests
-                            kubectl apply -f k8s-deployment.yaml
+                            kubectl apply -f manifests/Deployment.yaml
                             
                             # Update deployment image
                             kubectl set image deployment/$K8S_DEPLOYMENT_NAME $K8S_DEPLOYMENT_NAME=$DOCKER_IMAGE:$BUILD_NUMBER -n $K8S_NAMESPACE
