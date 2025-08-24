@@ -45,93 +45,23 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    echo "Deploying to Kubernetes cluster..."
-                    withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
-                        sh """
-                            # Set KUBECONFIG manually using token and server
-                            export KUBE_API=https://127.0.0.1:38181
-                            export K8S_NAMESPACE=flask-app
+                withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+                sh """
+                    # Update image tag in-place (option 1): set image
+                    kubectl -n flask-app set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${BUILD_NUMBER} --record || true
 
-                            kubectl config set-cluster jenkins-cluster --server=\$KUBE_API --insecure-skip-tls-verify=true
-                            kubectl config set-credentials jenkins-user --token=\$K8S_TOKEN
-                            kubectl config set-context jenkins-context --cluster=jenkins-cluster --user=jenkins-user --namespace=\$K8S_NAMESPACE
-                            kubectl config use-context jenkins-context
-
-                            # Apply deployment
-                            kubectl apply -f manifests/Deployment.yaml --validate=false
-
-                            # Update image
-                            kubectl set image deployment/\$K8S_DEPLOYMENT_NAME \$K8S_DEPLOYMENT_NAME=\$DOCKER_IMAGE:\$BUILD_NUMBER -n \$K8S_NAMESPACE
-
-                            # Wait for rollout
-                            kubectl rollout status deployment/\$K8S_DEPLOYMENT_NAME -n \$K8S_NAMESPACE --timeout=300s
-
-                            # Verify pods
-                            kubectl get pods -n \$K8S_NAMESPACE -l app=\$K8S_DEPLOYMENT_NAME
-                        """
-                    }
+                    # Wait for rollout
+                    kubectl -n flask-app rollout status deployment/flask-app --timeout=120s
+                """
                 }
             }
         }
-
-        stage('Verify Deployment') {
-            steps {
-                script {
-                    echo "Verifying deployment health..."
-                    withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
-                        sh """
-                            export KUBE_API=https://127.0.0.1:38181
-                            export K8S_NAMESPACE=flask-app
-
-                            kubectl config set-cluster jenkins-cluster --server=\$KUBE_API --insecure-skip-tls-verify=true
-                            kubectl config set-credentials jenkins-user --token=\$K8S_TOKEN
-                            kubectl config set-context jenkins-context --cluster=jenkins-cluster --user=jenkins-user --namespace=\$K8S_NAMESPACE
-                            kubectl config use-context jenkins-context
-
-                            # Wait for pods
-                            kubectl wait --for=condition=ready pod -l app=\$K8S_DEPLOYMENT_NAME -n \$K8S_NAMESPACE --timeout=60s
-
-                            # Get service
-                            kubectl get svc -n \$K8S_NAMESPACE
-
-                            # Describe deployment
-                            kubectl describe deployment \$K8S_DEPLOYMENT_NAME -n \$K8S_NAMESPACE
-                        """
-                        }
-                    }
-                }
-            }
     }
 
     post {
-        always {
-            echo 'Pipeline completed'
-        }
-        success {
-            echo 'Deployment successful!'
-            script {
-                sh 'docker system prune -f'
-            }
-        }
         failure {
-            echo 'Pipeline failed!'
-            script {
-                withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
-                    sh """
-                        export KUBE_API=https://127.0.0.1:38181
-                        export K8S_NAMESPACE=flask-app
-
-                        kubectl config set-cluster jenkins-cluster --server=\$KUBE_API --insecure-skip-tls-verify=true
-                        kubectl config set-credentials jenkins-user --token=\$K8S_TOKEN
-                        kubectl config set-context jenkins-context --cluster=jenkins-cluster --user=jenkins-user --namespace=\$K8S_NAMESPACE
-                        kubectl config use-context jenkins-context
-
-                        echo "=== DEBUGGING INFORMATION ==="
-                        kubectl get events -n \$K8S_NAMESPACE --sort-by='.lastTimestamp' | tail -10
-                        kubectl logs -l app=\$K8S_DEPLOYMENT_NAME -n \$K8S_NAMESPACE --tail=50
-                    """
-                }
+        withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+            sh 'kubectl -n flask-app rollout undo deployment/flask-app || true'
             }
         }
     }
