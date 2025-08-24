@@ -48,11 +48,11 @@ pipeline {
                 script {
                     echo "Deploying to Kubernetes cluster..."
                     withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
-                        // Apply manifests
+                        
                         sh '''
                             # Configure kubectl
                             kubectl config set-credentials jenkins --token="$K8S_TOKEN"
-                            kubectl config set-context jenkins --cluster=kubernetes --user=jenkins
+                            kubectl config set-context jenkins --cluster=kind-dev --user=jenkins
                             kubectl config use-context jenkins
                             
                             # Apply deployment manifests
