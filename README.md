@@ -27,4 +27,10 @@ jenkins/jenkins:lts-jdk17
 - install your plugins.
 - set Jenkins URL to "http://VM_public_IP:8080/"
 
+[IMPORTANT]
+[SET UP INGRESS NGINX CONTROLLER: 
+```kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml```
+```kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=90s```
+]
+
 

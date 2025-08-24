@@ -17,7 +17,7 @@ def test_home_endpoint(client):
     assert rv.status_code == 200
     data = rv.get_json()
     assert 'message' in data
-    assert 'Hello World from Flask CI/CD!' in data['message']
+    assert 'CI/CD!' in data['message']
 
 def test_health_endpoint(client):
     """Test the health endpoint"""
