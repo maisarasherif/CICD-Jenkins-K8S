@@ -46,35 +46,34 @@ pipeline {
 
         stage('Update Manifest') {
             steps {
-                sh '''
+                sh """
                 if grep -q '^\\s*image:' manifests/Deployment.yaml; then
-                    # If image line exists, replace it
-                    sed -i "s|^\\s*image:.*|image: maisara99/jenkins-py:$GIT_SHA|" manifests/Deployment.yaml
+                    # Replace existing image line
+                    sed -i "s|^\\(\\s*image:\\).*|\\1 maisara99/jenkins-py:${env.GIT_SHA}|" manifests/Deployment.yaml
                 else
-                    # If image line does not exist, append it
-                    echo "image: maisara99/jenkins-py:$GIT_SHA" >> manifests/Deployment.yaml
+                    # Insert after container name line
+                    sed -i "/^\\s*- name: flask-app/a\\
+                    image: maisara99/jenkins-py:${env.GIT_SHA}
+                " manifests/Deployment.yaml
                 fi
-                '''
+                """
             }
         }
 
         stage('Commit & Push Manifest') {
             steps {
                 sshagent(['github-id']) {
-                    sh """
-                    # Ensure the image line exists correctly under the container
-                    if grep -q '^\\s*image:' manifests/Deployment.yaml; then
-                        # Replace existing image line while preserving indentation
-                        sed -i "s|^\\(\\s*image:\\).*|\\1 maisara99/jenkins-py:${GIT_SHA}|" manifests/Deployment.yaml
-                    else
-                        # Insert image line after the container name line
-                        sed -i "/^\\s*- name: flask-app/a\\
-            image: maisara99/jenkins-py:${GIT_SHA}
-        " manifests/Deployment.yaml
-                    fi
-                    """
-                        }
+                    sh '''
+                    mkdir -p ~/.ssh
+                    ssh-keyscan github.com >> ~/.ssh/known_hosts
+                    git config user.email "ci-bot@example.com"
+                    git config user.name "CI Bot"
+                    git add manifests/Deployment.yaml
+                    git commit -m "Update image" || true
+                    git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
+                    '''
                 }
+            }
         }
 
         //stage('Deploy to Kubernetes') {
