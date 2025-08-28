@@ -47,21 +47,20 @@ pipeline {
         stage('Update Manifest') {
             steps {
                 sh """
-                echo "Before update:"
+                echo "Current image line:"
                 grep -n "image:" manifests/Deployment.yaml || echo "No image line found"
                 
-                if grep -q "^[[:space:]]*image:" manifests/Deployment.yaml; then
-                    # Replace existing image line
-                    sed -i "s|^\\([[:space:]]*image:[[:space:]]*\\).*|\\1maisara99/jenkins-py:${GIT_SHA}|" manifests/Deployment.yaml
-                    echo "Replaced existing image line"
-                else
-                    # Add new image line after container name
-                    sed -i "/- name:/a\\        image: maisara99/jenkins-py:${GIT_SHA}" manifests/Deployment.yaml
-                    echo "Added new image line"
+                # Download yq if needed
+                if [ ! -f ./yq ]; then
+                    curl -L "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64" -o yq
+                    chmod +x yq
                 fi
                 
-                echo "After update:"
-                grep -n -A2 -B2 "image:" manifests/Deployment.yaml
+                # Use yq to update (most reliable)
+                ./yq eval '(.spec.template.spec.containers[] | select(.name == "flask-app") | .image) = "maisara99/jenkins-py:'"${GIT_SHA}"'"' -i manifests/Deployment.yaml
+                
+                echo "Updated image line:"
+                grep -n "image:" manifests/Deployment.yaml
                 """
             }
         }
