@@ -62,7 +62,6 @@ pipeline {
             steps {
                 sshagent(['github-id']) {
                     sh '''
-                    git checkout main
                     git add manifests/Deployment.yaml
                     git commit -m "Update image" || true
                     git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
