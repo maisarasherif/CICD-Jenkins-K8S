@@ -5,6 +5,7 @@ pipeline {
         DOCKER_HOST = "tcp://dind:2375"
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "maisara99/jenkins-py"
+        GIT_SHA = "${env.GIT_COMMIT[0..6]}"
         BUILD_NUMBER = "latest"
         K8S_NAMESPACE = "flask-app"
         K8S_DEPLOYMENT_NAME = "flask-app"
@@ -17,13 +18,13 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER -f app/Dockerfile app'
+                sh 'docker build -t $DOCKER_IMAGE:$GIT_SHA -f app/Dockerfile app'
             }
         }
         
         stage('Test') {
             steps {
-                sh 'docker run --rm $DOCKER_IMAGE:$BUILD_NUMBER python -m pytest tests/ -v'
+                sh 'docker run --rm $DOCKER_IMAGE:$GIT_SHA python -m pytest tests/ -v'
             }
         }
 
@@ -37,9 +38,9 @@ pipeline {
 
         stage('Push Image') {
             steps {
-                sh 'docker push $DOCKER_IMAGE:$BUILD_NUMBER'
-                sh 'docker tag $DOCKER_IMAGE:$BUILD_NUMBER $DOCKER_IMAGE:latest'
-                sh 'docker push $DOCKER_IMAGE:latest'
+                //sh 'docker push $DOCKER_IMAGE:$BUILD_NUMBER'
+                //sh 'docker tag $DOCKER_IMAGE:$BUILD_NUMBER $DOCKER_IMAGE:$GIT_SHA'
+                sh 'docker push $DOCKER_IMAGE:$GIT_SHA'
             }
         }
 
