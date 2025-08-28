@@ -47,28 +47,21 @@ pipeline {
         stage('Update Manifest') {
             steps {
                 sh """
-                python3 - << 'EOF'
-import yaml
-import sys
-import os
-
-# Read the YAML file
-with open('manifests/Deployment.yaml', 'r') as file:
-    data = yaml.safe_load(file)
-
-# Update the image
-git_sha = os.environ.get('GIT_SHA', '')
-if 'spec' in data and 'template' in data['spec'] and 'spec' in data['spec']['template']:
-    containers = data['spec']['template']['spec'].get('containers', [])
-    if containers:
-        containers[0]['image'] = f'maisara99/jenkins-py:{git_sha}'
-
-# Write back to file
-with open('manifests/Deployment.yaml', 'w') as file:
-    yaml.dump(data, file, default_flow_style=False, indent=2)
-
-print(f"Updated image to: maisara99/jenkins-py:{git_sha}")
-EOF
+                echo "Before update:"
+                grep -n "image:" manifests/Deployment.yaml || echo "No image line found"
+                
+                if grep -q "^[[:space:]]*image:" manifests/Deployment.yaml; then
+                    # Replace existing image line
+                    sed -i "s|^\\([[:space:]]*image:[[:space:]]*\\).*|\\1maisara99/jenkins-py:${GIT_SHA}|" manifests/Deployment.yaml
+                    echo "Replaced existing image line"
+                else
+                    # Add new image line after container name
+                    sed -i "/- name:/a\\        image: maisara99/jenkins-py:${GIT_SHA}" manifests/Deployment.yaml
+                    echo "Added new image line"
+                fi
+                
+                echo "After update:"
+                grep -n -A2 -B2 "image:" manifests/Deployment.yaml
                 """
             }
         }
