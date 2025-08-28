@@ -15,15 +15,15 @@ pipeline {
             steps { checkout scm }
         }
 
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER -f deployment/Dockerfile deployment'
+            }
+        }
+        
         stage('Test') {
             steps {
                 sh 'docker run --rm $DOCKER_IMAGE:$BUILD_NUMBER python -m pytest tests/ -v'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER -f app/Dockerfile app'
             }
         }
 
@@ -43,27 +43,26 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                withKubeConfig([credentialsId: 'kubeconfig-prod']) {
-                sh """
-                    # Update image tag in-place (option 1): set image
-                    kubectl -n flask-app set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${BUILD_NUMBER} --record || true
+        //stage('Deploy to Kubernetes') {
+            //steps {
+            //    withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+            //    sh """
+            //        # Update image tag in-place (option 1): set image
+            //        kubectl -n flask-app set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${BUILD_NUMBER} --record || true
 
-                    # Wait for rollout
-                    kubectl -n flask-app rollout status deployment/flask-app --timeout=120s
-                """
-                }
-            }
-        }
+            //        # Wait for rollout
+            //        kubectl -n flask-app rollout status deployment/flask-app --timeout=120s
+            //    """
+            //    }
+          //  }
+        //}
     }
 
-    post {
-        failure {
-        withKubeConfig([credentialsId: 'kubeconfig-prod']) {
-            sh 'kubectl -n flask-app rollout undo deployment/flask-app || true'
-            }
-        }
-    }
+    //post {
+        //failure {
+        //withKubeConfig([credentialsId: 'kubeconfig-prod']) {
+          //  sh 'kubectl -n flask-app rollout undo deployment/flask-app || true'
+        //    }
+      //  }
+    //}
 }
-
