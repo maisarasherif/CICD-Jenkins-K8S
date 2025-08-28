@@ -47,13 +47,23 @@ pipeline {
         stage('Update Manifest') {
             steps {
                 sh """
-                if grep -q '^\\s*image:' manifests/Deployment.yaml; then
-                    # Replace existing image line while keeping indentation
-                    sed -i "s|^\\(\\s*image:\\).*|\\1 maisara99/jenkins-py:${GIT_SHA}|" manifests/Deployment.yaml
-                else
-                    # Insert image line with exact 6-space indentation
-                    sed -i '/^\\s*- name: flask-app/a\\      image: maisara99/jenkins-py:${GIT_SHA}' manifests/Deployment.yaml
-                fi
+                awk -v sha=${GIT_SHA} '
+                BEGIN { replaced=0 }
+                /^\\s*image:/ {
+                    print gensub(/.*/, "      image: maisara99/jenkins-py:" sha, 1)
+                    replaced=1
+                    next
+                }
+                /^\\s*- name: flask-app/ {
+                    print
+                    if (!replaced) {
+                        print "      image: maisara99/jenkins-py:" sha
+                        replaced=1
+                    }
+                    next
+                }
+                { print }
+                ' manifests/Deployment.yaml > manifests/Deployment.tmp && mv manifests/Deployment.tmp manifests/Deployment.yaml
                 """
             }
         }
