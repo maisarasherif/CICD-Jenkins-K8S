@@ -47,7 +47,7 @@ pipeline {
         stage('Update Manifest') {
             steps {
                 sh """
-                sed -i 's|image: $DOCKER_IMAGE:.*|image: $DOCKER_IMAGE:$GIT_SHA|' manifests/Deployment.yaml
+                sed -i "s|^\s*image:\s*maisara99/jenkins-py.*|image: maisara99/jenkins-py:$GIT_SHA|" manifests/Deployment.yaml
                 """
             }
         }
@@ -55,6 +55,7 @@ pipeline {
         stage('Commit & Push Manifest') {
             steps {
                 sh """
+                git checkout main
                 git config user.email "ci-bot@example.com"
                 git config user.name "CI Bot"
                 git add manifests/Deployment.yaml
