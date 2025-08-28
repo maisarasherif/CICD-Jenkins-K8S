@@ -47,7 +47,7 @@ pipeline {
         stage('Update Manifest') {
             steps {
                 sh """
-                sed -i "s|^\s*image:\s*maisara99/jenkins-py.*|image: maisara99/jenkins-py:$GIT_SHA|" manifests/Deployment.yaml
+                sed -i "s|^*image:*maisara99/jenkins-py.*|image: maisara99/jenkins-py:$GIT_SHA|" manifests/Deployment.yaml
                 """
             }
         }
