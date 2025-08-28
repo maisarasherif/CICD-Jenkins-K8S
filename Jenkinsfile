@@ -47,23 +47,14 @@ pipeline {
         stage('Update Manifest') {
             steps {
                 sh """
-                awk -v sha=${GIT_SHA} '
-                BEGIN { replaced=0 }
-                /^\\s*image:/ {
-                    print gensub(/.*/, "      image: maisara99/jenkins-py:" sha, 1)
-                    replaced=1
-                    next
-                }
-                /^\\s*- name: flask-app/ {
-                    print
-                    if (!replaced) {
-                        print "      image: maisara99/jenkins-py:" sha
-                        replaced=1
-                    }
-                    next
-                }
-                { print }
-                ' manifests/Deployment.yaml > manifests/Deployment.tmp && mv manifests/Deployment.tmp manifests/Deployment.yaml
+                # Install yq
+                if ! command -v yq &> /dev/null; then
+                    wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+                    chmod +x /usr/local/bin/yq
+                fi
+                
+                # Update image using yq (handles YAML structure properly)
+                yq eval '.spec.template.spec.containers[0].image = "maisara99/jenkins-py:${GIT_SHA}"' -i manifests/Deployment.yaml
                 """
             }
         }
