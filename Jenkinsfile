@@ -44,6 +44,26 @@ pipeline {
             }
         }
 
+        stage('Update Manifest') {
+            steps {
+                sh """
+                sed -i 's|image: $DOCKER_IMAGE:.*|image: $DOCKER_IMAGE:$GIT_SHA|' manifests/Deployment.yaml
+                """
+            }
+        }
+
+        stage('Commit & Push Manifest') {
+            steps {
+                sh """
+                git config user.email "ci-bot@example.com"
+                git config user.name "CI Bot"
+                git add manifests/Deployment.yaml
+                git commit -m "Update image to $DOCKER_IMAGE:$GIT_SHA"
+                git push origin HEAD:main
+                """
+            }
+        }
+
         //stage('Deploy to Kubernetes') {
             //steps {
             //    withKubeConfig([credentialsId: 'kubeconfig-prod']) {
