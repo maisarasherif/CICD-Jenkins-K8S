@@ -60,14 +60,14 @@ pipeline {
 
         stage('Commit & Push Manifest') {
             steps {
-                sh """
-                git checkout main
-                git config user.email "ci-bot@example.com"
-                git config user.name "CI Bot"
-                git add manifests/Deployment.yaml
-                git commit -m "Update image to $DOCKER_IMAGE:$GIT_SHA"
-                git push origin HEAD:main
-                """
+                sshagent(['JENKINS_SSH_CREDENTIAL_ID']) {
+                    sh '''
+                    git checkout main
+                    git add manifests/Deployment.yaml
+                    git commit -m "Update image" || true
+                    git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
+                    '''
+                }
             }
         }
 
