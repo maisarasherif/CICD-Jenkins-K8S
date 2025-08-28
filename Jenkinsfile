@@ -48,27 +48,27 @@ pipeline {
             steps {
                 sh """
                 python3 - << 'EOF'
-                import yaml
-                import sys
-                import os
+import yaml
+import sys
+import os
 
-                # Read the YAML file
-                with open('manifests/Deployment.yaml', 'r') as file:
-                    data = yaml.safe_load(file)
+# Read the YAML file
+with open('manifests/Deployment.yaml', 'r') as file:
+    data = yaml.safe_load(file)
 
-                # Update the image
-                git_sha = os.environ.get('GIT_SHA', '')
-                if 'spec' in data and 'template' in data['spec'] and 'spec' in data['spec']['template']:
-                    containers = data['spec']['template']['spec'].get('containers', [])
-                    if containers:
-                        containers[0]['image'] = f'maisara99/jenkins-py:{git_sha}'
+# Update the image
+git_sha = os.environ.get('GIT_SHA', '')
+if 'spec' in data and 'template' in data['spec'] and 'spec' in data['spec']['template']:
+    containers = data['spec']['template']['spec'].get('containers', [])
+    if containers:
+        containers[0]['image'] = f'maisara99/jenkins-py:{git_sha}'
 
-                # Write back to file
-                with open('manifests/Deployment.yaml', 'w') as file:
-                    yaml.dump(data, file, default_flow_style=False, indent=2)
+# Write back to file
+with open('manifests/Deployment.yaml', 'w') as file:
+    yaml.dump(data, file, default_flow_style=False, indent=2)
 
-                print(f"Updated image to: maisara99/jenkins-py:{git_sha}")
-                EOF
+print(f"Updated image to: maisara99/jenkins-py:{git_sha}")
+EOF
                 """
             }
         }
