@@ -60,7 +60,7 @@ pipeline {
 
         stage('Commit & Push Manifest') {
             steps {
-                sshagent(['JENKINS_SSH_CREDENTIAL_ID']) {
+                sshagent(['github-id']) {
                     sh '''
                     git checkout main
                     git add manifests/Deployment.yaml
