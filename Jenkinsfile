@@ -62,6 +62,10 @@ pipeline {
             steps {
                 sshagent(['github-id']) {
                     sh '''
+                    mkdir -p ~/.ssh
+                    ssh-keyscan github.com >> ~/.ssh/known_hosts
+                    git config user.email "ci-bot@example.com"
+                    git config user.name "CI Bot"
                     git add manifests/Deployment.yaml
                     git commit -m "Update image" || true
                     git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
