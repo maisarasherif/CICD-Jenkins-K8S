@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: maisara99/jenkins-py
+image: maisara99/jenkins-py:7661ae0
         ports:
         - containerPort: 5000
         env:
