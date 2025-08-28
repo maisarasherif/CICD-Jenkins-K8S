@@ -48,13 +48,11 @@ pipeline {
             steps {
                 sh """
                 if grep -q '^\\s*image:' manifests/Deployment.yaml; then
-                    # Replace existing image line
-                    sed -i "s|^\\(\\s*image:\\).*|\\1 maisara99/jenkins-py:${env.GIT_SHA}|" manifests/Deployment.yaml
+                    # Replace existing image line while keeping indentation
+                    sed -i "s|^\\(\\s*image:\\).*|\\1 maisara99/jenkins-py:${GIT_SHA}|" manifests/Deployment.yaml
                 else
-                    # Insert after container name line
-                    sed -i "/^\\s*- name: flask-app/a\\
-                    image: maisara99/jenkins-py:${env.GIT_SHA}
-                " manifests/Deployment.yaml
+                    # Insert image line with exact 6-space indentation
+                    sed -i '/^\\s*- name: flask-app/a\\      image: maisara99/jenkins-py:${GIT_SHA}' manifests/Deployment.yaml
                 fi
                 """
             }
