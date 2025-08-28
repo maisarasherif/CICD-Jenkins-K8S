@@ -46,9 +46,15 @@ pipeline {
 
         stage('Update Manifest') {
             steps {
-                sh """
-                sed -i "s|^*image:*maisara99/jenkins-py.*|image: maisara99/jenkins-py:$GIT_SHA|" manifests/Deployment.yaml
-                """
+                sh '''
+                if grep -q '^\\s*image:' manifests/Deployment.yaml; then
+                    # If image line exists, replace it
+                    sed -i "s|^\\s*image:.*|image: maisara99/jenkins-py:$GIT_SHA|" manifests/Deployment.yaml
+                else
+                    # If image line does not exist, append it
+                    echo "image: maisara99/jenkins-py:$GIT_SHA" >> manifests/Deployment.yaml
+                fi
+                '''
             }
         }
 
