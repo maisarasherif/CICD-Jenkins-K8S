@@ -12,7 +12,7 @@ VERSION = os.environ.get('VERSION', '1.0.0')
 @app.route('/')
 def hello_world():
     return jsonify({
-        'message': 'Bye bye CI/CD!',
+        'message': 'My CI/CD!',
         'hostname': socket.gethostname(),
         'timestamp': datetime.utcnow().isoformat(),
         'version': VERSION,
