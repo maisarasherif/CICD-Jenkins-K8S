@@ -61,17 +61,20 @@ pipeline {
         stage('Commit & Push Manifest') {
             steps {
                 sshagent(['github-id']) {
-                    sh '''
-                    mkdir -p ~/.ssh
-                    ssh-keyscan github.com >> ~/.ssh/known_hosts
-                    git config user.email "ci-bot@example.com"
-                    git config user.name "CI Bot"
-                    git add manifests/Deployment.yaml
-                    git commit -m "Update image" || true
-                    git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
-                    '''
+                    sh """
+                    # Ensure the image line exists correctly under the container
+                    if grep -q '^\\s*image:' manifests/Deployment.yaml; then
+                        # Replace existing image line while preserving indentation
+                        sed -i "s|^\\(\\s*image:\\).*|\\1 maisara99/jenkins-py:${sha}|" manifests/Deployment.yaml
+                    else
+                        # Insert image line after the container name line
+                        sed -i "/^\\s*- name: flask-app/a\\
+            image: maisara99/jenkins-py:${sha}
+        " manifests/Deployment.yaml
+                    fi
+                    """
+                        }
                 }
-            }
         }
 
         //stage('Deploy to Kubernetes') {
