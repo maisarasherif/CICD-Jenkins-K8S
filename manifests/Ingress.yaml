@@ -7,13 +7,9 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     kubernetes.io/ingress.class: nginx
 spec:
-  rules:
-  - http:
-      paths:
-      - pathType: Prefix 
-        path: /
-        backend:
-          service:
-            name: flask-app-service
-            port:
-              number: 80
+  ingressClassName: nginx  
+  defaultBackend:
+    service:
+      name: flask-app-service
+      port:
+        number: 80
