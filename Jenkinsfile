@@ -80,27 +80,5 @@ pipeline {
                 }
             }
         }
-
-        //stage('Deploy to Kubernetes') {
-            //steps {
-            //    withKubeConfig([credentialsId: 'kubeconfig-prod']) {
-            //    sh """
-            //        # Update image tag in-place (option 1): set image
-            //        kubectl -n flask-app set image deployment/flask-app flask-app=${DOCKER_IMAGE}:${BUILD_NUMBER} --record || true
-
-            //        # Wait for rollout
-            //        kubectl -n flask-app rollout status deployment/flask-app --timeout=120s
-            //    """
-            //    }
-          //  }
-        //}
     }
-
-    //post {
-        //failure {
-        //withKubeConfig([credentialsId: 'kubeconfig-prod']) {
-          //  sh 'kubectl -n flask-app rollout undo deployment/flask-app || true'
-        //    }
-      //  }
-    //}
 }
