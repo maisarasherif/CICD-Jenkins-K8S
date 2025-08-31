@@ -12,7 +12,7 @@ VERSION = os.environ.get('VERSION', '1.0.0')
 @app.route('/')
 def hello_world():
     return jsonify({
-        'message': 'My Canary CI/CD with ArgoCD!',
+        'message': 'My Canary V2.0 CI/CD with ArgoCD!',
         'hostname': socket.gethostname(),
         'timestamp': datetime.utcnow().isoformat(),
         'version': VERSION,
