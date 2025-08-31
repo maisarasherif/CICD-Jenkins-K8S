@@ -12,12 +12,12 @@ spec:
       stableService: flask-app-service
       canaryService: flask-app-canary-service
       steps:
-      - setWeight: 25    # Start with 25% traffic to new version
-      - pause: {duration: 30s}  # Wait 30 seconds
-      - setWeight: 50    # Increase to 50% traffic
-      - pause: {duration: 30s}  # Wait 30 seconds  
-      - setWeight: 75    # Increase to 75% traffic
-      - pause: {duration: 30s}  # Wait 30 seconds
+        - setWeight: 25 # Start with 25% traffic to new version
+        - pause: {duration: 30s} # Wait 30 seconds
+        - setWeight: 50 # Increase to 50% traffic
+        - pause: {duration: 30s} # Wait 30 seconds  
+        - setWeight: 75 # Increase to 75% traffic
+        - pause: {duration: 30s} # Wait 30 seconds
       # Final step: 100% traffic (automatic)
       trafficRouting:
         nginx:
@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
         - name: flask-app
-          image: maisara99/jenkins-py:4645752
+          image: maisara99/jenkins-py:9342e5b
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
