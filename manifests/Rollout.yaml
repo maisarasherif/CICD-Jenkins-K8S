@@ -9,16 +9,14 @@ spec:
   replicas: 4
   strategy:
     canary:
-      stableService: flask-app-service
-      canaryService: flask-app-canary-service
       steps:
-      - setWeight: 25    # Start with 25% traffic to new version
-      - pause: {duration: 30s}  # Wait 30 seconds
-      - setWeight: 50    # Increase to 50% traffic
-      - pause: {duration: 30s}  # Wait 30 seconds  
-      - setWeight: 75    # Increase to 75% traffic
-      - pause: {duration: 30s}  # Wait 30 seconds
-      # Final step: 100% traffic (automatic)
+      - setWeight: 25    
+      - pause: {duration: 30s}  
+      - setWeight: 50    
+      - pause: {duration: 30s}    
+      - setWeight: 75    
+      - pause: {duration: 30s}  
+      
       trafficRouting:
         nginx:
           stableIngress: flask-app-ingress
