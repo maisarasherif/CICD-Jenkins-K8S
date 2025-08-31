@@ -48,7 +48,7 @@ pipeline {
             steps {
                 sh """
                 echo "Current image line:"
-                grep -n "image:" manifests/Deployment.yaml || echo "No image line found"
+                grep -n "image:" manifests/Rollout.yaml || echo "No image line found"
                 
                 # Download yq if needed
                 if [ ! -f ./yq ]; then
@@ -57,10 +57,10 @@ pipeline {
                 fi
                 
                 # Use yq to update (most reliable)
-                ./yq eval '(.spec.template.spec.containers[] | select(.name == "flask-app") | .image) = "maisara99/jenkins-py:'"${GIT_SHA}"'"' -i manifests/Deployment.yaml
+                ./yq eval '(.spec.template.spec.containers[] | select(.name == "flask-app") | .image) = "maisara99/jenkins-py:'"${GIT_SHA}"'"' -i manifests/Rollout.yaml
                 
                 echo "Updated image line:"
-                grep -n "image:" manifests/Deployment.yaml
+                grep -n "image:" manifests/Rollout.yaml
                 """
             }
         }
@@ -73,7 +73,7 @@ pipeline {
                     ssh-keyscan github.com >> ~/.ssh/known_hosts
                     git config user.email "ci-bot@example.com"
                     git config user.name "CI Bot"
-                    git add manifests/Deployment.yaml
+                    git add manifests/Rollout.yaml
                     git commit -m "Update image" || true
                     git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
                     '''

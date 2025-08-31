@@ -1,12 +1,27 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
-  name: flask-app
+  name: flask-app-rollout
   namespace: flask-app
   labels:
     app: flask-app
 spec:
-  replicas: 2
+  replicas: 4
+  strategy:
+    canary:
+      steps:
+      - setWeight: 25    
+      - pause: {duration: 30s}  
+      - setWeight: 50    
+      - pause: {duration: 30s}    
+      - setWeight: 75    
+      - pause: {duration: 30s}  
+      
+      trafficRouting:
+        nginx:
+          stableIngress: flask-app-ingress
+          additionalIngressAnnotations:
+            canary-by-header: "canary"
   selector:
     matchLabels:
       app: flask-app
