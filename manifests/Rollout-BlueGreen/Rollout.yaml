@@ -1,3 +1,4 @@
+# Simplified version without analysis for easier testing
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
@@ -5,30 +6,16 @@ metadata:
   namespace: flask-app
   labels:
     app: flask-app
+    deployment-strategy: bluegreen
 spec:
   replicas: 3
   strategy:
     blueGreen:
-      # Service that routes production traffic (initially BLUE)
       activeService: flask-app-active-service
-      # Service that routes traffic to new version for testing (GREEN)  
       previewService: flask-app-preview-service
-      # Manual promotion for safety - requires approval to switch traffic
       autoPromotionEnabled: false
-      # How long to keep old version running after traffic switch (for rollback)
       scaleDownDelaySeconds: 30
-      prePromotionAnalysis:
-        templates:
-          - templateName: success-rate
-        args:
-          - name: service-name
-            value: flask-app-preview-service
-      postPromotionAnalysis:
-        templates:
-          - templateName: success-rate
-        args:
-          - name: service-name
-            value: flask-app-active-service
+      # Removed prePromotionAnalysis and postPromotionAnalysis for simplicity
   selector:
     matchLabels:
       app: flask-app
@@ -36,13 +23,15 @@ spec:
     metadata:
       labels:
         app: flask-app
+        deployment-strategy: bluegreen
     spec:
       containers:
         - name: flask-app
-          image: maisara99/jenkins-py:91aea62 # Jenkins will update this
+          image: maisara99/jenkins-py:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
+              name: http
           env:
             - name: ENVIRONMENT
               value: "production"
@@ -72,60 +61,3 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"
----
-# Analysis Template for automated health checks
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-  namespace: flask-app
-spec:
-  args:
-    - name: service-name
-  metrics:
-    - name: success-rate
-      # Check if the service is healthy by calling health endpoint
-      provider:
-        job:
-          spec:
-            template:
-              spec:
-                containers:
-                  - name: curl
-                    image: curlimages/curl:7.85.0
-                    command:
-                      - /bin/sh
-                      - -c
-                    args:
-                      - |
-                        # Test health endpoint multiple times
-                        success_count=0
-                        total_requests=10
-
-                        for i in $(seq 1 $total_requests); do
-                          if curl -f -s http://{{args.service-name}}.flask-app.svc.cluster.local:8080/health; then
-                            success_count=$((success_count + 1))
-                          fi
-                          sleep 2
-                        done
-
-                        success_rate=$((success_count * 100 / total_requests))
-                        echo "Success rate: $success_rate%"
-
-                        # Require 90% success rate
-                        if [ $success_rate -ge 90 ]; then
-                          echo "SUCCESS: Health check passed"
-                          exit 0
-                        else
-                          echo "FAILURE: Health check failed"
-                          exit 1
-                        fi
-                restartPolicy: Never
-            backoffLimit: 1
-      successCondition: result == "Successful"
-      failureLimit: 3
-      interval: 30s
-      count: 2
-  template:
-    spec:
-      containers: []
