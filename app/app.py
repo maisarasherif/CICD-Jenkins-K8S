@@ -12,8 +12,8 @@ VERSION = os.environ.get('VERSION', '1.0.0')
 @app.route('/')
 def hello_world():
     return jsonify({
-        'message': 'My Blue/Green V3.0 CI/CD with ArgoCD!',
-        'hostname': socket.gethostname(),
+        'message': 'CI/CD with Jenkins and ArgoCD: Blue/Green strategy',
+        #'hostname': socket.gethostname(),
         'timestamp': datetime.utcnow().isoformat(),
         'version': VERSION,
         'build_date': BUILD_DATE,
