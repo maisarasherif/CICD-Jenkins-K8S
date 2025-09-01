@@ -1,0 +1,20 @@
+# ActiveService.yaml - Routes production traffic to currently active environment
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-active-service
+  namespace: flask-app
+  labels:
+    app: flask-app
+    service-type: active
+spec:
+  selector:
+    app: flask-app
+    # ArgoCD Rollouts will automatically manage this selector
+    # to point to either blue or green environment
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 5000
+    name: http
+  type: ClusterIP

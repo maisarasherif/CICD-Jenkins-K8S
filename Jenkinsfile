@@ -48,19 +48,18 @@ pipeline {
             steps {
                 sh """
                 echo "Current image line:"
-                grep -n "image:" manifests/Deployment/Deployment.yaml || echo "No image line found"
+                grep -n "image:" manifests/Rollout-BlueGreen/Rollout.yaml || echo "No image line found"
                 
-                # Download yq if needed
+                # Download yq yaml editor
                 if [ ! -f ./yq ]; then
                     curl -L "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64" -o yq
                     chmod +x yq
                 fi
                 
-                # Use yq to update (most reliable)
-                ./yq eval '(.spec.template.spec.containers[] | select(.name == "flask-app") | .image) = "maisara99/jenkins-py:'"${GIT_SHA}"'"' -i manifests/Deployment/Deployment.yaml
+                ./yq eval '(.spec.template.spec.containers[] | select(.name == "flask-app") | .image) = "maisara99/jenkins-py:'"${GIT_SHA}"'"' -i manifests/Rollout-BlueGreen/Rollout.yaml
                 
                 echo "Updated image line:"
-                grep -n "image:" manifests/Deployment/Deployment.yaml
+                grep -n "image:" manifests/Rollout-BlueGreen/Rollout.yaml
                 """
             }
         }
@@ -73,7 +72,7 @@ pipeline {
                     ssh-keyscan github.com >> ~/.ssh/known_hosts
                     git config user.email "ci-bot@example.com"
                     git config user.name "CI Bot"
-                    git add manifests/Deployment/Deployment.yaml
+                    git add manifests/Rollout-BlueGreen/Rollout.yaml
                     git commit -m "Update image" || true
                     git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
                     '''

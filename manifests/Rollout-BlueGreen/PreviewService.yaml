@@ -1,0 +1,20 @@
+# PreviewService.yaml - Routes preview traffic to new (green) environment  
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-preview-service
+  namespace: flask-app
+  labels:
+    app: flask-app
+    service-type: preview
+spec:
+  selector:
+    app: flask-app
+    # ArgoCD Rollouts will automatically manage this selector
+    # to point to the green (new) environment
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 5000
+    name: http
+  type: ClusterIP

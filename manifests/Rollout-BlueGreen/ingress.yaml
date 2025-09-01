@@ -1,0 +1,29 @@
+# Ingress.yaml - External access to the application
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flask-app-bluegreen-ingress
+  namespace: flask-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      # Production traffic - routes to active service (blue/green)
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-app-active-service
+            port:
+              number: 8080
+      # Preview traffic - routes to preview service (always green)
+      - path: /preview
+        pathType: Prefix
+        backend:
+          service:
+            name: flask-app-preview-service
+            port:
+              number: 8080
