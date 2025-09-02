@@ -28,7 +28,14 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker image..."
-                    sh 'docker build -t $DOCKER_IMAGE:$GIT_SHA -f app/Dockerfile app'
+                    def buildDate = new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                    sh """
+                    docker build -t $DOCKER_IMAGE:$GIT_SHA \
+                        --build-arg BUILD_DATE="${buildDate}" \
+                        --build-arg VCS_REF=${env.GIT_COMMIT} \
+                        --build-arg VERSION=2.0.0 \
+                        -f app/Dockerfile app
+                    """
                 }
             }
         }
