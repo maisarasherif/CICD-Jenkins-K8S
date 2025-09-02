@@ -107,25 +107,6 @@ pipeline {
                 }
             }
         }
-        stage('Update Manifest') {
-            steps {
-                sh """
-                echo "Current image line:"
-                grep -n "image:" manifests/Rollout-BlueGreen/Rollout.yaml || echo "No image line found"
-                
-                # Download yq yaml editor
-                if [ ! -f ./yq ]; then
-                    curl -L "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64" -o yq
-                    chmod +x yq
-                fi
-                
-                ./yq eval '(.spec.template.spec.containers[] | select(.name == "flask-app") | .image) = "maisara99/jenkins-py:'"${GIT_SHA}"'"' -i manifests/Rollout-BlueGreen/Rollout.yaml
-                
-                echo "Updated image line:"
-                grep -n "image:" manifests/Rollout-BlueGreen/Rollout.yaml
-                """
-            }
-        }
     }
 }
 def updateBlueGreenManifest() {
