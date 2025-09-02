@@ -281,7 +281,13 @@ HTML_TEMPLATE = '''
 def home():
     """Enhanced home page with visual deployment information"""
     color_config = COLOR_SCHEMES.get(DEPLOYMENT_STRATEGY, COLOR_SCHEMES['standard'])
-    current_env = color_config.get(CURRENT_COLOR, color_config['main'])
+    
+    # Fix the KeyError by providing a safe fallback
+    if CURRENT_COLOR in color_config:
+        current_env = color_config[CURRENT_COLOR]
+    else:
+        # Fallback to the first available color scheme
+        current_env = list(color_config.values())[0]
     
     return render_template_string(HTML_TEMPLATE,
         deployment_strategy=DEPLOYMENT_STRATEGY,
