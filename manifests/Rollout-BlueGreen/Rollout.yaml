@@ -14,7 +14,7 @@ spec:
       activeService: flask-app-active-service
       previewService: flask-app-preview-service
       autoPromotionEnabled: false
-      scaleDownDelaySeconds: 30
+      scaleDownDelaySeconds: 60
       # Removed prePromotionAnalysis and postPromotionAnalysis for simplicity
   selector:
     matchLabels:
