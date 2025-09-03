@@ -1,9 +1,8 @@
 from flask import Flask, jsonify, render_template_string
 import os
 import socket
-import random
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -18,7 +17,26 @@ POD_NAME = os.environ.get('POD_NAME', socket.gethostname())
 # Generate unique instance ID based on pod name
 INSTANCE_ID = hashlib.md5(POD_NAME.encode()).hexdigest()[:8]
 
-# Color schemes for different deployment strategies
+# Determine environment color (static - no randomization)
+def get_environment_color():
+    """Static color assignment based on pod name"""
+    if DEPLOYMENT_STRATEGY == 'bluegreen':
+        # Use pod name hash to consistently assign blue or green
+        if int(INSTANCE_ID[-1], 16) % 2 == 0:
+            return 'blue'
+        else:
+            return 'green'
+    elif DEPLOYMENT_STRATEGY == 'canary':
+        if int(INSTANCE_ID[-1], 16) % 2 == 0:
+            return 'stable'
+        else:
+            return 'canary'
+    else:
+        return 'standard'
+
+CURRENT_COLOR = get_environment_color()
+
+# Color schemes
 COLOR_SCHEMES = {
     'bluegreen': {
         'blue': {'primary': '#2563eb', 'secondary': '#60a5fa', 'name': 'Blue Environment'},
@@ -29,23 +47,11 @@ COLOR_SCHEMES = {
         'canary': {'primary': '#ea580c', 'secondary': '#fb923c', 'name': 'Canary Release'}
     },
     'standard': {
-        'main': {'primary': '#1f2937', 'secondary': '#6b7280', 'name': 'Standard Deployment'}
+        'standard': {'primary': '#1f2937', 'secondary': '#6b7280', 'name': 'Standard Deployment'}
     }
 }
 
-def get_environment_color():
-    """Determine color based on deployment strategy and instance"""
-    if DEPLOYMENT_STRATEGY == 'bluegreen':
-        # Randomly assign blue or green (in real deployment, this would be determined by rollout)
-        return random.choice(['blue', 'green'])
-    elif DEPLOYMENT_STRATEGY == 'canary':
-        return random.choice(['stable', 'canary'])
-    else:
-        return 'main'
-
-CURRENT_COLOR = get_environment_color()
-
-# HTML Template
+# Static HTML Template (no animations or real-time updates)
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -70,17 +76,13 @@ HTML_TEMPLATE = '''
         .gradient-bg {
             background: linear-gradient(135deg, {{ primary_color }}, {{ secondary_color }});
         }
-        .pulse-ring {
-            animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(.33); }
-            80%, 100% { opacity: 0; }
-        }
         .deployment-card {
             backdrop-filter: blur(16px) saturate(180%);
             background-color: rgba(255, 255, 255, 0.75);
             border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        .status-dot {
+            background-color: {{ primary_color }};
         }
     </style>
 </head>
@@ -88,12 +90,9 @@ HTML_TEMPLATE = '''
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="text-center mb-12">
-            <div class="relative inline-block">
-                <div class="absolute inset-0 pulse-ring rounded-full" style="background-color: {{ secondary_color }}"></div>
-                <h1 class="relative text-6xl font-bold text-white mb-4 drop-shadow-lg">
-                    🚀 CI/CD Pipeline Demo
-                </h1>
-            </div>
+            <h1 class="text-6xl font-bold text-white mb-4 drop-shadow-lg">
+                🚀 CI/CD Pipeline Demo
+            </h1>
             <p class="text-xl text-white/90 font-medium">{{ environment_name }} - {{ deployment_strategy.title() }} Strategy</p>
         </div>
 
@@ -103,7 +102,7 @@ HTML_TEMPLATE = '''
             <div class="deployment-card rounded-2xl p-8 shadow-2xl">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">Environment Details</h2>
-                    <div class="w-4 h-4 rounded-full animate-pulse" style="background-color: {{ primary_color }}"></div>
+                    <div class="w-4 h-4 rounded-full status-dot"></div>
                 </div>
                 
                 <div class="space-y-4">
@@ -126,8 +125,8 @@ HTML_TEMPLATE = '''
                         <span class="font-mono text-sm text-gray-800">{{ pod_name }}</span>
                     </div>
                     <div class="flex justify-between items-center py-3">
-                        <span class="font-semibold text-gray-600">Uptime:</span>
-                        <span class="font-mono text-gray-800" id="uptime">{{ uptime }}</span>
+                        <span class="font-semibold text-gray-600">Current Time:</span>
+                        <span class="font-mono text-sm text-gray-800">{{ current_time }}</span>
                     </div>
                 </div>
             </div>
@@ -153,8 +152,8 @@ HTML_TEMPLATE = '''
                         <span class="font-mono text-sm text-gray-800">{{ build_date }}</span>
                     </div>
                     <div class="flex justify-between items-center py-3">
-                        <span class="font-semibold text-gray-600">Current Time:</span>
-                        <span class="font-mono text-sm text-gray-800" id="current-time">{{ current_time }}</span>
+                        <span class="font-semibold text-gray-600">Deployment:</span>
+                        <span class="font-mono text-sm text-gray-800">{{ current_time }}</span>
                     </div>
                 </div>
             </div>
@@ -239,55 +238,19 @@ HTML_TEMPLATE = '''
         <!-- Footer -->
         <div class="text-center mt-12">
             <p class="text-white/70">
-                Last updated: <span id="last-updated">{{ current_time }}</span> | 
-                Refresh page to see live updates
+                Deployment completed: {{ current_time }}
             </p>
         </div>
     </div>
-
-    <script>
-        // Update current time every second
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('current-time').textContent = now.toLocaleString();
-            document.getElementById('last-updated').textContent = now.toLocaleString();
-        }
-        
-        // Update uptime
-        let startTime = new Date();
-        function updateUptime() {
-            const now = new Date();
-            const diff = now - startTime;
-            const minutes = Math.floor(diff / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            document.getElementById('uptime').textContent = `${minutes}m ${seconds}s`;
-        }
-        
-        // Update every second
-        setInterval(() => {
-            updateTime();
-            updateUptime();
-        }, 1000);
-        
-        // Initial updates
-        updateTime();
-        updateUptime();
-    </script>
 </body>
 </html>
 '''
 
 @app.route('/')
 def home():
-    """Enhanced home page with visual deployment information"""
+    """Static home page with visual deployment information"""
     color_config = COLOR_SCHEMES.get(DEPLOYMENT_STRATEGY, COLOR_SCHEMES['standard'])
-    
-    # Fix the KeyError by providing a safe fallback
-    if CURRENT_COLOR in color_config:
-        current_env = color_config[CURRENT_COLOR]
-    else:
-        # Fallback to the first available color scheme
-        current_env = list(color_config.values())[0]
+    current_env = color_config[CURRENT_COLOR]
     
     return render_template_string(HTML_TEMPLATE,
         deployment_strategy=DEPLOYMENT_STRATEGY,
@@ -299,8 +262,7 @@ def home():
         version=VERSION,
         git_commit=VCS_REF[:7] if VCS_REF != 'unknown' else 'unknown',
         build_date=BUILD_DATE,
-        current_time=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
-        uptime='0m 0s'
+        current_time=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
     )
 
 @app.route('/health')
@@ -312,7 +274,7 @@ def health_check():
         'instance_id': INSTANCE_ID,
         'pod_name': POD_NAME,
         'deployment_strategy': DEPLOYMENT_STRATEGY,
-        'environment': CURRENT_COLOR if DEPLOYMENT_STRATEGY in ['bluegreen', 'canary'] else 'standard'
+        'environment': CURRENT_COLOR
     }), 200
 
 @app.route('/ready')
@@ -338,30 +300,20 @@ def version_info():
         'instance_id': INSTANCE_ID,
         'environment': ENVIRONMENT,
         'deployment_strategy': DEPLOYMENT_STRATEGY,
-        'current_environment': CURRENT_COLOR if DEPLOYMENT_STRATEGY in ['bluegreen', 'canary'] else 'standard'
+        'current_environment': CURRENT_COLOR
     })
 
 @app.route('/metrics')
 def metrics():
-    """Application metrics endpoint"""
-    import psutil
-    import time
-    
+    """Static application metrics"""
     return jsonify({
         'instance_id': INSTANCE_ID,
         'pod_name': POD_NAME,
         'deployment_strategy': DEPLOYMENT_STRATEGY,
-        'environment': CURRENT_COLOR if DEPLOYMENT_STRATEGY in ['bluegreen', 'canary'] else 'standard',
-        'system': {
-            'cpu_percent': psutil.cpu_percent(),
-            'memory_percent': psutil.virtual_memory().percent,
-            'uptime_seconds': time.time() - psutil.boot_time()
-        },
-        'app': {
-            'version': VERSION,
-            'git_commit': VCS_REF[:7] if VCS_REF != 'unknown' else 'unknown',
-            'build_date': BUILD_DATE
-        },
+        'environment': CURRENT_COLOR,
+        'version': VERSION,
+        'git_commit': VCS_REF[:7] if VCS_REF != 'unknown' else 'unknown',
+        'build_date': BUILD_DATE,
         'timestamp': datetime.utcnow().isoformat()
     })
 
