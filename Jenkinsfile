@@ -37,16 +37,16 @@ pipeline {
 
         stage('Checkout') {
             steps { 
-                checkout scm
-                script {
-
-                    echo "Deploying with strategy: ${DEPLOYMENT_STRATEGY}"
-                    echo "Image will be tagged as: ${DOCKER_IMAGE}:${GIT_SHA}"
-                } 
+                checkout scm 
             }
         }
 
         stage('Build Docker Image') {
+            when {
+                not {
+                    changelog '.*\\[skip ci\\].*'
+                }
+            }
             steps {
                 script {
                     echo "Building Docker image..."
@@ -133,7 +133,7 @@ pipeline {
                             exit 0
                         fi
 
-                        git commit -m "Update ${DEPLOYMENT_STRATEGY} deployment image to ${GIT_SHA}" || true
+                        git commit -m "Update ${DEPLOYMENT_STRATEGY} deployment image to ${GIT_SHA} [skip ci]" || true
 
                         git fetch origin main
                         git rebase origin/main || {
