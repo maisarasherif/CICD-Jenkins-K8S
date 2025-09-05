@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        githubPush()
+    }
+
     environment {
         DOCKER_HOST = "tcp://dind:2375"
         DOCKER_REGISTRY = "docker.io"
