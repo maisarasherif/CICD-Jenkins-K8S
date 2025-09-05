@@ -95,6 +95,13 @@ pipeline {
                         ssh-keyscan github.com >> ~/.ssh/known_hosts
                         git config user.email "ci-bot@example.com"
                         git config user.name "CI Bot"
+
+                        git fetch origin main
+                        git rebase origin/main || {
+                            echo "Rebase failed, trying merge strategy"
+                            git rebase --abort
+                            git merge origin/main
+                        }
                         
                         if [ "$DEPLOYMENT_STRATEGY" = "BlueGreen" ]; then
                             git add manifests/Rollout-BlueGreen/
