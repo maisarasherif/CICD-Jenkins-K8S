@@ -99,14 +99,7 @@ pipeline {
                         ssh-keyscan github.com >> ~/.ssh/known_hosts
                         git config user.email "ci-bot@example.com"
                         git config user.name "CI Bot"
-
-                        git fetch origin main
-                        git rebase origin/main || {
-                            echo "Rebase failed, trying merge strategy"
-                            git rebase --abort
-                            git merge origin/main
-                        }
-                        
+                    
                         if [ "$DEPLOYMENT_STRATEGY" = "BlueGreen" ]; then
                             git add manifests/Rollout-BlueGreen/
 
@@ -117,7 +110,20 @@ pipeline {
                             git add manifests/Deployment/
                         fi
 
+                        if git diff --staged --quiet; then
+                            echo "No changes to commit"
+                            exit 0
+                        fi
+
                         git commit -m "Update ${DEPLOYMENT_STRATEGY} deployment image to ${GIT_SHA}" || true
+
+                        git fetch origin main
+                        git rebase origin/main || {
+                            echo "Rebase failed, trying merge strategy"
+                            git rebase --abort
+                            git merge origin/main
+                        }
+
                         git push git@github.com:maisarasherif/CICD-Jenkins-K8S.git HEAD:main
                         '''
                     }
