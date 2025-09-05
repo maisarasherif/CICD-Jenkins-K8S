@@ -17,6 +17,24 @@ pipeline {
     }
 
     stages {
+
+        stage('Check if CI Commit') {
+            steps {
+                script {
+                    def commitMessage = sh(
+                        script: 'git log -1 --pretty=%B',
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (commitMessage.contains('[skip ci]') || commitMessage.contains('CI Bot')) {
+                        echo "Skipping CI build - commit was made by CI"
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+                }
+            }
+        }
+
         stage('Checkout') {
             steps { 
                 checkout scm
