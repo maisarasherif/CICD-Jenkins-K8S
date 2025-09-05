@@ -17,7 +17,7 @@ POD_NAME = os.environ.get('POD_NAME', socket.gethostname())
 def home():
     """Simple home page with deployment information"""
     return {
-        'message': f'testing webhook in CI/CD - {DEPLOYMENT_STRATEGY.title()} Deployment',
+        'message': f' testing webhook in CI/CD - {DEPLOYMENT_STRATEGY.title()} Deployment',
         'version': VERSION,
         'git_commit': GIT_COMMIT,
         'build_date': BUILD_DATE,
