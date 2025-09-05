@@ -18,20 +18,9 @@ pipeline {
 
     stages {
 
-        stage('Check if CI Commit') {
+        stage('SCM Skip Check') {
             steps {
-                script {
-                    def commitMessage = sh(
-                        script: 'git log -1 --pretty=%B',
-                        returnStdout: true
-                    ).trim()
-                    
-                    if (commitMessage.contains('[skip ci]') || commitMessage.contains('CI Bot')) {
-                        echo "Skipping CI build - commit was made by CI"
-                        currentBuild.result = 'SUCCESS'
-                        return
-                    }
-                }
+                scmSkip(deleteBuild: true, skipPattern:'.*\\[skip ci\\].*')
             }
         }
 
@@ -42,11 +31,6 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            when {
-                not {
-                    changelog '.*\\[skip ci\\].*'
-                }
-            }
             steps {
                 script {
                     echo "Building Docker image..."
