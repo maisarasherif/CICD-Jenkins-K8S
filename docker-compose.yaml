@@ -24,12 +24,8 @@ services:
     environment:
       DOCKER_TLS_CERTDIR: ""   
     command: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
-    sysctls:
-      - net.ipv4.ip_forward=1
-    cap_add:
-      - NET_ADMIN
     volumes:
-      - dind_storage:/var/lib/docker
+      - dind_data:/var/lib/docker
     networks:
       - jenkins-network
 
@@ -72,13 +68,18 @@ services:
 
 volumes:
   jenkins_home:
-  dind_storage:
+    external: true
+  dind_data:
+    external: true
   sonarqube_data:
+    external: true
   sonarqube_extensions:
+    external: true
   sonarqube_logs:
+    external: true
   postgresql_data:
+    external: true
 
 networks:
   jenkins-network:
     driver: bridge
-    external: true
