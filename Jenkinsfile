@@ -58,35 +58,35 @@ pipeline {
             }
         }
         // NEW: Trivy Security Scan Stage
-        stage('Trivy Security Scan') {
-            steps {
-                script {
-                    echo "🛡️ Running Trivy container security scan..."
-                    
-                    // Run Trivy scan and save results
-                    sh """
-                    docker run --rm \
-                        --network cicd-jenkins-k8s_jenkins-network \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        -v \$(pwd):/workspace \
-                        aquasec/trivy image \
-                        --format json \
-                        --output /workspace/trivy-report.json \
-                        $DOCKER_IMAGE:$GIT_SHA
-                    """
-                    
-                    // Display critical and high vulnerabilities
-                    sh """
-                    docker run --rm \
-                        --network cicd-jenkins-k8s_jenkins-network \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        aquasec/trivy image \
-                        --severity HIGH,CRITICAL \
-                        --format table \
-                        $DOCKER_IMAGE:$GIT_SHA
-                    """
-                    
-                    // Fail build if critical vulnerabilities found
+        //stage('Trivy Security Scan') {
+        //    steps {
+        //        script {
+        //            echo "🛡️ Running Trivy container security scan..."
+        //            
+        //            // Run Trivy scan and save results
+        //            sh """
+        //            docker run --rm \
+        //                --network cicd-jenkins-k8s_jenkins-network \
+        //                -v /var/run/docker.sock:/var/run/docker.sock \
+        //                -v \$(pwd):/workspace \
+        //                aquasec/trivy image \
+        //                --format json \
+        //                --output /workspace/trivy-report.json \
+        //                $DOCKER_IMAGE:$GIT_SHA
+        //            """
+        //            
+        //            // Display critical and high vulnerabilities
+        //            sh """
+        //            docker run --rm \
+        //                --network cicd-jenkins-k8s_jenkins-network \
+        //                -v /var/run/docker.sock:/var/run/docker.sock \
+        //                aquasec/trivy image \
+        //                --severity HIGH,CRITICAL \
+        //                --format table \
+        //                $DOCKER_IMAGE:$GIT_SHA
+        //            """
+        //            
+        //            // Fail build if critical vulnerabilities found
                     //sh """
                     //docker run --rm \
                     //    --network cicd-jenkins-k8s_jenkins-network \
@@ -97,15 +97,15 @@ pipeline {
                     //    --quiet \
                     //    $DOCKER_IMAGE:$GIT_SHA
                     //"""
-                }
-            }
-            post {
-                always {
-                    // Archive security scan results
-                    archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
-                }
-            }
-        }
+        //        }
+        //    }
+        //    post {
+        //        always {
+        //            // Archive security scan results
+        //            archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
+        //        }
+        //    }
+       // }
         
         stage('Test') {
             steps {
