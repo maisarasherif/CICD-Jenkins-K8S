@@ -34,6 +34,22 @@ pipeline {
             steps {
                 script {
                     echo "🔍 Running SonarQube code analysis..."
+                    
+                    // Generate test coverage (optional but recommended)
+                    sh '''
+                    # Install dependencies for testing and coverage
+                    docker run --rm -v $(pwd):/workspace -w /workspace python:3.9-slim sh -c "
+                        pip install pytest pytest-cov coverage
+                        if [ -f app/requirements.txt ]; then
+                            pip install -r app/requirements.txt
+                        fi
+                        # Run tests with coverage
+                        python -m pytest app/tests/ --cov=app --cov-report=xml --cov-report=term-missing --junitxml=test-results.xml || true
+                    "
+                    '''
+                }
+                script {
+                    echo "🔍 Running SonarQube code analysis..."
                     def scannerHome = tool 'SonarQubeScanner-2'
                     withSonarQubeEnv('SonarQube') {
                         sh "${scannerHome}/bin/sonar-scanner"
