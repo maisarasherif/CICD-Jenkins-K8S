@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: flask-app
-          image: maisara99/jenkins-py:4fdaf62
+          image: maisara99/jenkins-py:46fb0bd
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
