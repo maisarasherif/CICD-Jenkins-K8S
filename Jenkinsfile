@@ -81,13 +81,6 @@ pipeline {
                     }
                 }
             }
-            post {
-                always {
-                    // Archive test results and coverage reports
-                    publishTestResults testResultsPattern: 'test-results.xml'
-                    publishCoverage adapters: [coberturaAdapter('coverage.xml')], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
-                }
-            }
         }
         
 
