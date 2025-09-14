@@ -66,8 +66,8 @@ pipeline {
                         
                         # Run SonarQube scanner with simplified configuration
                         ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=flask-cicd-demo \
-                        -Dsonar.projectName="Flask CI/CD Demo" \
+                        -Dsonar.projectKey=cicd-gitops \
+                        -Dsonar.projectName="cicd-gitops" \
                         -Dsonar.projectVersion=1.0 \
                         -Dsonar.sources=app \
                         -Dsonar.exclusions=app/tests/**,**/*.pyc,**/__pycache__/** \
