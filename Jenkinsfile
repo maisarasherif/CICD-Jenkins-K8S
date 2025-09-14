@@ -29,60 +29,18 @@ pipeline {
                 checkout scm 
             }
         }
-        // NEW: SonarQube Analysis Stage
+        
         stage('SonarQube Analysis') {
             steps {
                 script {
                     echo "🔍 Running SonarQube code analysis..."
-                    
-                    // Generate test coverage (optional but recommended)
-                    sh '''
-                    # Install dependencies for testing and coverage
-                    docker run --rm -v $(pwd):/workspace -w /workspace python:3.9-slim sh -c "
-                        pip install pytest pytest-cov coverage
-                        if [ -f app/requirements.txt ]; then
-                            pip install -r app/requirements.txt
-                        fi
-                        # Run tests with coverage
-                        python -m pytest app/tests/ --cov=app --cov-report=xml --cov-report=term-missing --junitxml=test-results.xml || true
-                    "
-                    '''
-                }
-                script {
-                    echo "🔍 Running SonarQube code analysis..."
                     def scannerHome = tool 'SonarQubeScanner-2'
                     withSonarQubeEnv('SonarQube') {
-                        sh """
-                        echo "🔍 Starting SonarQube analysis..."
-                        
-                        # Verify coverage file exists and has content
-                        if [ -f coverage.xml ]; then
-                            echo "✅ Coverage file found, size: \$(stat -c%s coverage.xml)"
-                            echo "Coverage file sample:"
-                            head -10 coverage.xml
-                        else
-                            echo "❌ Coverage file not found!"
-                        fi
-                        
-                        # Run SonarQube scanner with simplified configuration
-                        ${scannerHome}/bin/sonar-scanner \
-                        -Dsonar.projectKey=cicd-gitops \
-                        -Dsonar.projectName="cicd-gitops" \
-                        -Dsonar.projectVersion=1.0 \
-                        -Dsonar.sources=app \
-                        -Dsonar.exclusions=app/tests/**,**/*.pyc,**/__pycache__/** \
-                        -Dsonar.tests=app/tests \
-                        -Dsonar.test.inclusions=app/tests/**/*.py \
-                        -Dsonar.python.coverage.reportPaths=coverage.xml \
-                        -Dsonar.python.xunit.reportPath=test-results.xml \
-                        -Dsonar.host.url=http://sonarqube:9000 \
-                        -Dsonar.login=${SONAR_AUTH_TOKEN}
-                        """
+                        sh "${scannerHome}/bin/sonar-scanner"
                     }
                 }
             }
         }
-        
 
         stage('Build Docker Image') {
             steps {
