@@ -52,11 +52,44 @@ pipeline {
                     echo "🔍 Running SonarQube code analysis..."
                     def scannerHome = tool 'SonarQubeScanner-2'
                     withSonarQubeEnv('SonarQube') {
-                        sh "${scannerHome}/bin/sonar-scanner"
+                        sh """
+                        echo "🔍 Starting SonarQube analysis..."
+                        
+                        # Verify coverage file exists and has content
+                        if [ -f coverage.xml ]; then
+                            echo "✅ Coverage file found, size: \$(stat -c%s coverage.xml)"
+                            echo "Coverage file sample:"
+                            head -10 coverage.xml
+                        else
+                            echo "❌ Coverage file not found!"
+                        fi
+                        
+                        # Run SonarQube scanner with simplified configuration
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=flask-cicd-demo \
+                        -Dsonar.projectName="Flask CI/CD Demo" \
+                        -Dsonar.projectVersion=1.0 \
+                        -Dsonar.sources=app \
+                        -Dsonar.exclusions=app/tests/**,**/*.pyc,**/__pycache__/** \
+                        -Dsonar.tests=app/tests \
+                        -Dsonar.test.inclusions=app/tests/**/*.py \
+                        -Dsonar.python.coverage.reportPaths=coverage.xml \
+                        -Dsonar.python.xunit.reportPath=test-results.xml \
+                        -Dsonar.host.url=http://sonarqube:9000 \
+                        -Dsonar.login=${SONAR_AUTH_TOKEN}
+                        """
                     }
                 }
             }
+            post {
+                always {
+                    // Archive test results and coverage reports
+                    publishTestResults testResultsPattern: 'test-results.xml'
+                    publishCoverage adapters: [coberturaAdapter('coverage.xml')], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                }
+            }
         }
+        
 
         stage('Build Docker Image') {
             steps {

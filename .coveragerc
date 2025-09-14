@@ -1,0 +1,11 @@
+[run]
+relative_files = True
+source = app/
+branch = True
+omit = 
+    app/tests/*
+    */test_*
+    */__pycache__/*
+
+[xml]
+output = coverage.xml
