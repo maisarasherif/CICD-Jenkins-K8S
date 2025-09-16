@@ -10,7 +10,8 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "maisara99/jenkins-py"
         GIT_SHA = "${env.GIT_COMMIT[0..6]}"
-        TRIVY_VERSION = "0.45.0"
+        //TRIVY_VERSION = "0.45.0"
+        TRIVY_IMAGE = "aquasec/trivy:0.45.0"
         BUILD_NUMBER = "latest"
         K8S_NAMESPACE = "flask-app"
         K8S_DEPLOYMENT_NAME = "flask-app"
@@ -59,53 +60,66 @@ pipeline {
             }
         }
 
-        stage('Install Trivy') {
+        stage('Pull Trivy') {
             steps {
                 script {
-                    sh '''
-                        # Download and install Trivy
-                        curl -sfL https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz | tar xz
-                        sudo mv trivy /usr/local/bin/
-                        trivy --version
-                    '''
+                    sh "docker pull ${TRIVY_IMAGE}"
                 }
             }
         }
-
+        
         stage('Trivy Filesystem Scan') {
             steps {
                 script {
                     sh '''
-                        # Scan filesystem for vulnerabilities
-                        trivy fs . \
+                        # Scan filesystem for vulnerabilities using Docker
+                        docker run --rm \
+                            -v ${WORKSPACE}:/workspace \
+                            -v /tmp/.trivy-cache:/root/.cache/trivy \
+                            ${TRIVY_IMAGE} fs /workspace \
                             --format json \
-                            --output trivy-fs-report.json
+                            --output /workspace/trivy-fs-report.json
                         
                         # Also generate human-readable report
-                        trivy fs . \
+                        docker run --rm \
+                            -v ${WORKSPACE}:/workspace \
+                            -v /tmp/.trivy-cache:/root/.cache/trivy \
+                            ${TRIVY_IMAGE} fs /workspace \
                             --format table \
-                            --output trivy-fs-report.txt
+                            --output /workspace/trivy-fs-report.txt
                     '''
                 }
             }
         }
-
+        
         stage('Trivy Container Image Scan') {
             steps {
                 script {
                     sh '''
                         # Scan the built Docker image
-                        trivy image $DOCKER_IMAGE:$GIT_SHA \
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v ${WORKSPACE}:/workspace \
+                            -v /tmp/.trivy-cache:/root/.cache/trivy \
+                            ${TRIVY_IMAGE} image $DOCKER_IMAGE:$GIT_SHA \
                             --format json \
-                            --output trivy-image-report.json
+                            --output /workspace/trivy-image-report.json
                         
                         # Generate table format for easy reading
-                        trivy image $DOCKER_IMAGE:$GIT_SHA \
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v ${WORKSPACE}:/workspace \
+                            -v /tmp/.trivy-cache:/root/.cache/trivy \
+                            ${TRIVY_IMAGE} image $DOCKER_IMAGE:$GIT_SHA \
                             --format table \
-                            --output trivy-image-report.txt
+                            --output /workspace/trivy-image-report.txt
                         
-                        # Scan with severity filtering
-                        trivy image $DOCKER_IMAGE:$GIT_SHA \
+                        # Show critical and high severity issues
+                        echo "=== CRITICAL AND HIGH SEVERITY VULNERABILITIES ==="
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            -v /tmp/.trivy-cache:/root/.cache/trivy \
+                            ${TRIVY_IMAGE} image $DOCKER_IMAGE:$GIT_SHA \
                             --severity HIGH,CRITICAL \
                             --format table
                     '''
