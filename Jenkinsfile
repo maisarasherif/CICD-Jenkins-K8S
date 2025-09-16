@@ -10,6 +10,7 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "maisara99/jenkins-py"
         GIT_SHA = "${env.GIT_COMMIT[0..6]}"
+        TRIVY_VERSION = "0.45.0"
         BUILD_NUMBER = "latest"
         K8S_NAMESPACE = "flask-app"
         K8S_DEPLOYMENT_NAME = "flask-app"
@@ -57,55 +58,60 @@ pipeline {
                 }
             }
         }
-        // NEW: Trivy Security Scan Stage
-        //stage('Trivy Security Scan') {
-        //    steps {
-        //        script {
-        //            echo "🛡️ Running Trivy container security scan..."
-        //            
-        //            // Run Trivy scan and save results
-        //            sh """
-        //            docker run --rm \
-        //                --network cicd-jenkins-k8s_jenkins-network \
-        //                -v /var/run/docker.sock:/var/run/docker.sock \
-        //                -v \$(pwd):/workspace \
-        //                aquasec/trivy image \
-        //                --format json \
-        //                --output /workspace/trivy-report.json \
-        //                $DOCKER_IMAGE:$GIT_SHA
-        //            """
-        //            
-        //            // Display critical and high vulnerabilities
-        //            sh """
-        //            docker run --rm \
-        //                --network cicd-jenkins-k8s_jenkins-network \
-        //                -v /var/run/docker.sock:/var/run/docker.sock \
-        //                aquasec/trivy image \
-        //                --severity HIGH,CRITICAL \
-        //                --format table \
-        //                $DOCKER_IMAGE:$GIT_SHA
-        //            """
-        //            
-        //            // Fail build if critical vulnerabilities found
-                    //sh """
-                    //docker run --rm \
-                    //    --network cicd-jenkins-k8s_jenkins-network \
-                    //    -v /var/run/docker.sock:/var/run/docker.sock \
-                    //    aquasec/trivy image \
-                    //    --exit-code 1 \
-                    //    --severity CRITICAL \
-                    //    --quiet \
-                    //    $DOCKER_IMAGE:$GIT_SHA
-                    //"""
-        //        }
-        //    }
-        //    post {
-        //        always {
-        //            // Archive security scan results
-        //            archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
-        //        }
-        //    }
-       // }
+
+        stage('Install Trivy') {
+            steps {
+                script {
+                    sh '''
+                        # Download and install Trivy
+                        wget -qO- https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz | tar xz
+                        sudo mv trivy /usr/local/bin/
+                        trivy --version
+                    '''
+                }
+            }
+        }
+
+        stage('Trivy Filesystem Scan') {
+            steps {
+                script {
+                    sh '''
+                        # Scan filesystem for vulnerabilities
+                        trivy fs . \
+                            --format json \
+                            --output trivy-fs-report.json
+                        
+                        # Also generate human-readable report
+                        trivy fs . \
+                            --format table \
+                            --output trivy-fs-report.txt
+                    '''
+                }
+            }
+        }
+
+        stage('Trivy Container Image Scan') {
+            steps {
+                script {
+                    sh '''
+                        # Scan the built Docker image
+                        trivy image $DOCKER_IMAGE:$GIT_SHA \
+                            --format json \
+                            --output trivy-image-report.json
+                        
+                        # Generate table format for easy reading
+                        trivy image $DOCKER_IMAGE:$GIT_SHA \
+                            --format table \
+                            --output trivy-image-report.txt
+                        
+                        # Scan with severity filtering
+                        trivy image $DOCKER_IMAGE:$GIT_SHA \
+                            --severity HIGH,CRITICAL \
+                            --format table
+                    '''
+                }
+            }
+        }
         
         stage('Test') {
             steps {
