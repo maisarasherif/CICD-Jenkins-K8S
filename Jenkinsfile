@@ -64,7 +64,7 @@ pipeline {
                 script {
                     sh '''
                         # Download and install Trivy
-                        wget -qO- https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz | tar xz
+                        curl -sfL https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz | tar xz
                         sudo mv trivy /usr/local/bin/
                         trivy --version
                     '''
