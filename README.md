@@ -7,6 +7,8 @@ A comprehensive DevSecOps pipeline demonstrating **Jenkins**, **SonarQube**, **T
 ```
 Developer → Git Push → Jenkins CI/CD → Static Code Analysis → Docker Build → Image Security Scan → GitOps → Argo CD → Kubernetes
 ```
+![Architecture diagram](./GitOps_CICD.gif)
+
 
 **Pipeline Flow:**
 1. **Code Push** triggers Jenkins pipeline
