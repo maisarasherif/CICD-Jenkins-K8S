@@ -5,7 +5,7 @@ A comprehensive DevSecOps pipeline demonstrating **Jenkins**, **SonarQube**, **T
 ## 🏗️ Architecture
 
 ```
-Developer → Git Push → Jenkins CI/CD → Security Scans → Docker Build → GitOps → Argo CD → Kubernetes
+Developer → Git Push → Jenkins CI/CD → Static Code Analysis → Docker Build → Image Security Scan → GitOps → Argo CD → Kubernetes
 ```
 
 **Pipeline Flow:**
