@@ -10,7 +10,6 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "maisara99/jenkins-py"
         GIT_SHA = "${env.GIT_COMMIT[0..6]}"
-        //TRIVY_VERSION = "0.45.0"
         TRIVY_IMAGE = "aquasec/trivy:0.45.0"
         BUILD_NUMBER = "latest"
         K8S_NAMESPACE = "flask-app"
@@ -72,7 +71,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        # Scan filesystem for vulnerabilities using Docker
+                        # filesystem scan
                         docker run --rm \
                             -v ${WORKSPACE}:/workspace \
                             -v /tmp/.trivy-cache:/root/.cache/trivy \
@@ -80,7 +79,7 @@ pipeline {
                             --format json \
                             --output /workspace/trivy-fs-report.json
                         
-                        # Also generate human-readable report
+                        # human-readable report
                         docker run --rm \
                             -v ${WORKSPACE}:/workspace \
                             -v /tmp/.trivy-cache:/root/.cache/trivy \
@@ -96,7 +95,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        # Scan the built Docker image
+                        # Image scan
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             -v ${WORKSPACE}:/workspace \
@@ -105,7 +104,7 @@ pipeline {
                             --format json \
                             --output /workspace/trivy-image-report.json
                         
-                        # Generate table format for easy reading
+                        # table format for easy reading
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
                             -v ${WORKSPACE}:/workspace \
@@ -114,7 +113,7 @@ pipeline {
                             --format table \
                             --output /workspace/trivy-image-report.txt
                         
-                        # Show critical and high severity issues
+                        # critical and high severity issues
                         echo "=== CRITICAL AND HIGH SEVERITY VULNERABILITIES ==="
                         docker run --rm \
                             -v /var/run/docker.sock:/var/run/docker.sock \
@@ -149,7 +148,7 @@ pipeline {
             steps {
                 script {
 
-                    echo "📤 Pushing image to registry (Docker Hub)..."
+                    echo "Pushing image to registry (Docker Hub)..."
                     sh 'docker push $DOCKER_IMAGE:$GIT_SHA'
                 }  
             }
